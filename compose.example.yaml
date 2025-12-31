@@ -1,0 +1,74 @@
+services:
+   # ---------------------------------------------------------
+   # SERVICE 1: THE BRAIN (Ollama CPU Optimized)
+   # ---------------------------------------------------------
+   llm-api:
+      image: ollama/ollama:latest
+      container_name: cpu-llm-api
+      restart: unless-stopped
+      expose:
+         - "11434"
+      volumes:
+         - ollama_data:/root/.ollama
+         - ./scripts/entrypoint.sh:/entrypoint.sh
+      environment:
+         # Model Config
+         - MODEL_NAME=${AI_MODEL_NAME:-hf.co/unsloth/Qwen3-4B-Instruct-2507-GGUF:Q6_K_XL}
+         - PRELOAD_MODEL=${PRELOAD_MODEL:-true}
+
+         # Server Behavior
+         - OLLAMA_KEEP_ALIVE=-1
+         - OLLAMA_HOST=0.0.0.0
+         - OLLAMA_NUM_PARALLEL=1
+         - OLLAMA_DEBUG=false
+      deploy:
+         resources:
+            limits:
+               # Limit CPU to prevent system stuttering (Adjust based on VPS)
+               cpus: '4.0'
+               # Prevent OOM Killer
+               memory: 8G
+      entrypoint: ["/bin/bash", "/entrypoint.sh"]
+      healthcheck:
+         test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+         interval: 45s
+         timeout: 10s
+         retries: 3
+      networks:
+         - default
+
+   # ---------------------------------------------------------
+   # SERVICE 2: THE GUARD (Nginx Auth Sidecar)
+   # ---------------------------------------------------------
+   api-gateway:
+      image: nginx:alpine
+      container_name: cpu-llm-gateway
+      restart: unless-stopped
+
+      # Caddy / Reverse Proxy Integration
+      labels:
+         caddy_0: ${SERVICE_DOMAIN}
+         caddy_0.reverse_proxy: "{{upstreams 80}}"
+
+      volumes:
+         - ./config/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+
+      # Inject Env Vars into Config at Runtime
+      command: /bin/sh -c "envsubst '\$API_SECRET_KEY' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+
+      environment:
+         - API_SECRET_KEY=${API_SECRET_KEY}
+
+      depends_on:
+         - llm-api
+
+      networks:
+         - default
+         - proxy
+
+volumes:
+   ollama_data:
+
+networks:
+   proxy:
+      external: true
