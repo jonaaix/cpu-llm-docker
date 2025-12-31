@@ -15,4 +15,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Docker
-docker-compose.override.yml
+docker-compose.yaml
+docker-compose.yml
+compose.yaml
+compose.yml
