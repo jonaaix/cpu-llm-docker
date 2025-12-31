@@ -64,11 +64,11 @@ services:
 
       networks:
          - default
-         - proxy
+         - main-proxy
 
 volumes:
    ollama_data:
 
 networks:
-   proxy:
+   main-proxy:
       external: true
