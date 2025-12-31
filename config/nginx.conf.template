@@ -23,7 +23,7 @@ http {
             # -------------------------------------------------------
             # SECURITY: API KEY VALIDATION
             # -------------------------------------------------------
-            if ($http_authorization != "Bearer ${API_SECRET_KEY}") {
+            if ($http_authorization != "Bearer $API_SECRET_KEY") {
                 return 401 '{"error": "Unauthorized: Invalid API Key"}';
             }
 

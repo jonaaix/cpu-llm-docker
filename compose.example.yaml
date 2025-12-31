@@ -54,7 +54,7 @@ services:
          - ./config/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
 
       # Inject Env Vars into Config at Runtime
-      command: /bin/sh -c "envsubst '\$API_SECRET_KEY' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+      command: /bin/sh -c "envsubst '\$$API_SECRET_KEY' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
 
       environment:
          - API_SECRET_KEY=${API_SECRET_KEY}
